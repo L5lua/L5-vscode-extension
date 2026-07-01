@@ -1,10 +1,10 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 const vscode = require('vscode');
-const cp = require('child_process')
-const path = require('path')
-const os = require('os')
-const fs = require('fs')
+const cp = require('child_process');
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
 
 let currentInstances = new Map();
 let statusBarItem;
@@ -17,7 +17,7 @@ function getDefaultLovePath() {
 	if (platform === 'win32') {
 		return 'C:\\Program Files\\LOVE\\love.exe';
 	} else if (platform === 'darwin') {
-		return 'love';
+		return '/Applications/love.app/Contents/MacOS/love';
 	} else {
 		return 'love';
 	}
@@ -43,10 +43,6 @@ function findExecutableInPath(executable) {
 }
 
 function validateLovePath(lovePath, platform) {
-	if (platform === 'darwin') {
-		return { valid: true, resolvedPath: lovePath };
-	}
-
 	if (path.isAbsolute(lovePath)) {
 		if (fs.existsSync(lovePath)) {
 			return { valid: true, resolvedPath: lovePath };
@@ -54,7 +50,7 @@ function validateLovePath(lovePath, platform) {
 		return {
 			valid: false,
 			resolvedPath: lovePath,
-			error: `LOVE executable not found at: ${lovePath}`
+			error: `LOVE executable not found at: ${lovePath}`,
 		};
 	}
 
@@ -71,14 +67,14 @@ function validateLovePath(lovePath, platform) {
 		return {
 			valid: false,
 			resolvedPath: lovePath,
-			error: `LOVE executable "${lovePath}" not found in PATH. Install LOVE (e.g., 'sudo apt install love' or 'flatpak install flathub org.love2d.love2d') or set the full path in settings.`
+			error: `LOVE executable "${lovePath}" not found in PATH. Install LOVE (e.g., 'sudo apt install love' or 'flatpak install flathub org.love2d.love2d') or set the full path in settings.`,
 		};
 	}
 
 	return {
 		valid: false,
 		resolvedPath: lovePath,
-		error: `LOVE executable "${lovePath}" not found. Please configure the correct path in settings.`
+		error: `LOVE executable "${lovePath}" not found. Please configure the correct path in settings.`,
 	};
 }
 
@@ -106,10 +102,12 @@ async function updateStatusBar() {
 	}
 
 	if (!statusBarItem) {
-		statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+		statusBarItem = vscode.window.createStatusBarItem(
+			vscode.StatusBarAlignment.Left,
+			100,
+		);
 	}
-	console.log('status bar')
-	await console.log(currentInstances)
+
 	if (currentInstances.size > 0) {
 		statusBarItem.text = '$(debug-stop) Stop LOVE';
 		statusBarItem.tooltip = 'Stop running LOVE instance';
@@ -129,26 +127,30 @@ async function showWelcomeMessage(context) {
 	let needsConfiguration;
 
 	if (platform === 'darwin') {
-		message = 'Welcome to the L5 Extension! On macOS, the extension works out of the box if you have enabled Love to run in your security settings. Press Alt+L to launch your LOVE project or \"Run L5\" in the bottom right corner.';
-		needsConfiguration = false;
+		message =
+			'Welcome to the L5 Extension! Please configure the path to your LOVE executable to get started.';
+		needsConfiguration = true;
 	} else if (platform === 'win32') {
-		message = 'Welcome to LOVE Launcher! Please configure the path to your LOVE executable to get started.';
+		message =
+			'Welcome to the L5 Extension! Please configure the path to your LOVE executable to get started.';
 		needsConfiguration = true;
 	} else {
-		message = 'Welcome to LOVE Launcher! Please configure the path to your LOVE executable (or ensure "love" is in your PATH).';
+		message =
+			'Welcome to the L5 Extension! Please configure the path to your LOVE executable (or ensure "love" is in your PATH).';
 		needsConfiguration = true;
 	}
 
-	const buttons = needsConfiguration
-		? ['Open Settings', 'Dismiss']
-		: ['OK'];
+	const buttons = needsConfiguration ? ['Open Settings', 'Dismiss'] : ['OK'];
 
-	const result = await vscode.window.showInformationMessage(message, ...buttons);
+	const result = await vscode.window.showInformationMessage(
+		message,
+		...buttons,
+	);
 
 	if (result === 'Open Settings') {
 		await vscode.commands.executeCommand(
 			'workbench.action.openSettings',
-			'l5.path'
+			'l5.path',
 		);
 	}
 
@@ -158,8 +160,9 @@ async function showWelcomeMessage(context) {
 }
 
 async function activate(context) {
-
-	let maxInstances= vscode.workspace.getConfiguration('l5').get('maxInstances');
+	let maxInstances = vscode.workspace
+		.getConfiguration('l5')
+		.get('maxInstances');
 	let overwrite = vscode.workspace.getConfiguration('l5').get('overwrite');
 
 	outputChannel = vscode.window.createOutputChannel('LOVE');
@@ -167,12 +170,15 @@ async function activate(context) {
 
 	updateStatusBar();
 
-	const fileWatcher = vscode.workspace.createFileSystemWatcher('**/{main,conf}.lua');
-	// await fileWatcher.onDidCreate(async () => await updateStatusBar());
-	// await fileWatcher.onDidDelete(async () => await updateStatusBar());
+	const fileWatcher =
+		vscode.workspace.createFileSystemWatcher('**/{main,conf}.lua');
+	await fileWatcher.onDidCreate(async () => await updateStatusBar());
+	await fileWatcher.onDidDelete(async () => await updateStatusBar());
 	context.subscriptions.push(fileWatcher);
 
-	// await vscode.workspace.onDidChangeWorkspaceFolders(async () => await updateStatusBar());
+	await vscode.workspace.onDidChangeWorkspaceFolders(
+		async () => await updateStatusBar(),
+	);
 
 	const stopCommand = vscode.commands.registerCommand('l5.stop', () => {
 		currentInstances.forEach((instance) => {
@@ -182,8 +188,12 @@ async function activate(context) {
 		});
 		currentInstances.clear();
 
+		// check if flatpak is actually defined
 		if (os.platform() === 'linux') {
-			cp.spawn('flatpak', ['kill', FLATPAK_APP_ID], { detached: true, stdio: 'ignore' });
+			cp.spawn('flatpak', ['kill', FLATPAK_APP_ID], {
+				detached: true,
+				stdio: 'ignore',
+			});
 		}
 
 		updateStatusBar();
@@ -191,9 +201,15 @@ async function activate(context) {
 	context.subscriptions.push(stopCommand);
 
 	const saveListener = vscode.workspace.onDidSaveTextDocument((document) => {
-		const autoRestart = vscode.workspace.getConfiguration('l5').get('autoRestartOnSave');
+		const autoRestart = vscode.workspace
+			.getConfiguration('l5')
+			.get('autoRestartOnSave');
 
-		if (autoRestart && document.languageId === 'lua' && currentInstances.size > 0) {
+		if (
+			autoRestart &&
+			document.languageId === 'lua' &&
+			currentInstances.size > 0
+		) {
 			vscode.commands.executeCommand('l5.launch');
 		}
 	});
@@ -215,11 +231,13 @@ async function activate(context) {
 		}
 		// Check if we have a valid path to work with
 		if (actDocPath !== undefined) {
-
 			if (currentInstances.size < maxInstances || overwrite) {
 				const platform = os.platform();
-				let lovePath = String(vscode.workspace.getConfiguration('l5').get('path'));
+				let lovePath = String(
+					vscode.workspace.getConfiguration('l5').get('path'),
+				);
 
+				// if user did not change default love path (windows) and their system is not windows
 				const windowsDefault = 'C:\\Program Files\\LOVE\\love.exe';
 				if (lovePath === windowsDefault && platform !== 'win32') {
 					lovePath = getDefaultLovePath();
@@ -229,12 +247,12 @@ async function activate(context) {
 				if (!validation.valid) {
 					const result = await vscode.window.showErrorMessage(
 						validation.error || 'LOVE executable not found.',
-						'Open Settings'
+						'Open Settings',
 					);
 					if (result === 'Open Settings') {
 						await vscode.commands.executeCommand(
 							'workbench.action.openSettings',
-							'l5.path'
+							'l5.path',
 						);
 					}
 					return;
@@ -242,10 +260,18 @@ async function activate(context) {
 
 				const resolvedLovePath = validation.resolvedPath;
 				const useFlatpak = validation.isFlatpak === true;
-				const useConsoleSubsystem = vscode.workspace.getConfiguration('l5').get('useConsoleSubsystem');
-				const saveAllOnLaunch = vscode.workspace.getConfiguration('l5').get('saveAllOnLaunch');
-				const customArgsStr = String(vscode.workspace.getConfiguration('l5').get('customArgs') || '');
-				const customArgs = customArgsStr.split(/\s+/).filter(arg => arg.length > 0);
+				const useConsoleSubsystem = vscode.workspace
+					.getConfiguration('l5')
+					.get('useConsoleSubsystem');
+				const saveAllOnLaunch = vscode.workspace
+					.getConfiguration('l5')
+					.get('saveAllOnLaunch');
+				const customArgsStr = String(
+					vscode.workspace.getConfiguration('l5').get('customArgs') || '',
+				);
+				const customArgs = customArgsStr
+					.split(/\s+/)
+					.filter((arg) => arg.length > 0);
 
 				if (saveAllOnLaunch) {
 					vscode.workspace.saveAll();
@@ -270,64 +296,75 @@ async function activate(context) {
 				let process;
 
 				if (platform === 'win32') {
-					const args = useConsoleSubsystem ? [loveProjectPath, "--console", ...customArgs] : [loveProjectPath, ...customArgs];
+					const args = useConsoleSubsystem
+						? [loveProjectPath, '--console', ...customArgs]
+						: [loveProjectPath, ...customArgs];
 					process = await cp.spawn(resolvedLovePath, args);
-				} else if (platform === 'darwin') {
-					process = await cp.spawn('open', ['-n', '-a', 'love', '--args', loveProjectPath, ...customArgs]);
 				} else {
-					process = await cp.spawn(resolvedLovePath, [loveProjectPath, ...customArgs]);
+					process = await cp.spawn(resolvedLovePath, [
+						loveProjectPath,
+						...customArgs,
+					]);
 				}
 
-				process.on("exit", (code, signal) => {
-					if (code != 0 && process.pid) {
-						currentInstances.delete(process.pid);
-					}
-					updateStatusBar();
-				});
-				
 				if (process.pid) {
 					await currentInstances.set(process.pid, process);
 					console.log(currentInstances);
 					await updateStatusBar();
 				}
+				process.stdout.on('data', (data) => {
+					console.log(`LOVE stdout: ${data}`);
+				});
 
-				if (process.stdout) {
-					process.stdout.on('data', (data) => {
-						outputChannel?.append(data.toString());
-					});
-				}
-				if (process.stderr) {
-					process.stderr.on('data', (data) => {
-						outputChannel?.append(data.toString());
-					});
-				}
+				process.stderr.on('data', (data) => {
+					console.error(`LOVE stderr: ${data}`);
+				});
 				outputChannel?.show(true);
+
+				process.on('exit', (code, signal) => {
+					console.log(process.spawnargs);
+					if (process.pid && !process.spawnargs.includes('open')) {
+						currentInstances.delete(process.pid);
+						console.log(
+							`LOVE process closed with code ${code}, signal ${signal}`,
+						);
+					}
+					updateStatusBar();
+				});
+				process.on('close', (code, signal) => {
+					console.log(
+						`LOVE process closed with code ${code}, signal ${signal}`,
+					);
+					updateStatusBar();
+				});
 
 				process.on('error', async (err) => {
 					const result = await vscode.window.showErrorMessage(
 						`Failed to launch LOVE: ${err.message}`,
-						'Open Settings'
+						'Open Settings',
 					);
 					if (result === 'Open Settings') {
 						await vscode.commands.executeCommand(
 							'workbench.action.openSettings',
-							'l5.path'
+							'l5.path',
 						);
 					}
 					if (process.pid) {
 						currentInstances.delete(process.pid);
 					}
-					// updateStatusBar();
+					updateStatusBar();
 				});
-
 			} else {
-				vscode.window.showErrorMessage("You have reached your max concurrent Löve instances. You can change this setting in your config.");
+				vscode.window.showErrorMessage(
+					'You have reached your max concurrent Löve instances. You can change this setting in your config.',
+				);
 			}
 		} else {
 			/* Undefined workspace folder leads to error msg. */
-			vscode.window.showErrorMessage("vscode.workspace.workspaceFolders is undefined. Please check that you have opened you project as a workspace.");
+			vscode.window.showErrorMessage(
+				'vscode.workspace.workspaceFolders is undefined. Please check that you have opened you project as a workspace.',
+			);
 		}
-
 	});
 
 	context.subscriptions.push(disposable);
@@ -343,5 +380,5 @@ function deactivate() {
 
 module.exports = {
 	activate,
-	deactivate
-}
+	deactivate,
+};

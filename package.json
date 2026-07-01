@@ -1,101 +1,101 @@
 {
-  "name": "l5",
-  "displayName": "L5",
-  "description": "Build and compile L5 projects using the Love2d game engine with a push of a button.",
-  "version": "0.0.1",
-  "engines": {
-    "vscode": "^1.100.3"
-  },
-  "categories": [
-    "Extension Packs",
-    "Programming Languages",
-    "Other"
-  ],
-  "extensionPack": [
-    "sumneko.lua",
-    "tomblind.local-lua-debugger-vscode"
-  ],
-  "activationEvents": [
-    "workspaceContains:main.lua",
-    "workspaceContains:L5.lua"
-  ],
-  "keywords": [
-    "L5",
-    "Löve",
-    "love2d",
-    "launcher",
-    "game",
-    "engine",
-    "creative coding",
-    "project generator",
-    "canvas",
-    "art"
-  ],
-  "main": "./extension.js",
-  "contributes": {
-    "commands": [
-      {
-        "command": "l5.launch",
-        "title": "Launch L5"
-      },
-      {
-        "command": "l5.stop",
-        "title": "Close L5"
-      }
-    ],
-    "configuration": {
-      "type": "object",
-      "title": "L5 configuration",
-      "properties": {
-        "l5.path": {
-          "type": "string",
-          "description": "Path to your love executable. Windows: default path shown. Linux: use 'love' if in PATH, or full path like /usr/bin/love. macOS: uses 'open -n -a love' automatically.",
-          "default": "C:\\Program Files\\LOVE\\love.exe"
-        },
-        "l5.maxInstances": {
-          "type": "integer",
-          "description": "Set the max amount of instance you want to be able to spawn at the same time.",
-          "default": 1
-        },
-        "l5.useConsoleSubsystem": {
-          "type": "boolean",
-          "description": "Should Löve be executed with the console subsystem? (Windows only)",
-          "default": false
-        },
-        "l5.overwrite": {
-          "type": "boolean",
-          "description": "Should the launcher overwrite the first process when launching another one?",
-          "default": true
-        },
-        "l5.saveAllOnLaunch": {
-          "type": "boolean",
-          "description": "Should VS Code save all opened files on Löve launch?",
-          "default": false
-        },
-        "l5.autoRestartOnSave": {
-          "type": "boolean",
-          "description": "Automatically restart LÖVE when a Lua file is saved",
-          "default": false
-        },
-        "l5.customArgs": {
-          "type": "string",
-          "description": "Additional command line arguments to pass to LÖVE (space-separated)",
-          "default": ""
-        }
-      }
-    }
-  },
-  "scripts": {
-    "lint": "eslint .",
-    "pretest": "npm run lint",
-    "test": "vscode-test"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.125.0",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "22.x",
-    "eslint": "^9.39.3",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
-  }
+	"name": "l5",
+	"displayName": "L5",
+	"description": "Build and compile L5 projects using the Love2d game engine with a push of a button.",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.100.3"
+	},
+	"categories": [
+		"Extension Packs",
+		"Programming Languages",
+		"Other"
+	],
+	"extensionPack": [
+		"sumneko.lua",
+		"tomblind.local-lua-debugger-vscode"
+	],
+	"activationEvents": [
+		"workspaceContains:L5.lua",
+		"workspaceContains:main.lua"
+	],
+	"keywords": [
+		"L5",
+		"Löve",
+		"love2d",
+		"launcher",
+		"game",
+		"engine",
+		"creative coding",
+		"project generator",
+		"canvas",
+		"art"
+	],
+	"main": "./extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "l5.launch",
+				"title": "Launch L5"
+			},
+			{
+				"command": "l5.stop",
+				"title": "Close L5"
+			}
+		],
+		"configuration": {
+			"type": "object",
+			"title": "L5 configuration",
+			"properties": {
+				"l5.path": {
+					"type": "string",
+					"description": "Path to your love executable. \n\nWindows: `C:\\Program Files\\LOVE\\love.exe`. \n\nLinux: use 'love' if in PATH, or full path like /usr/bin/love. \n\nmacOS: Move the Love application to your Applications folder and add /Applications/love.app/Contents/MacOS/love",
+					"default": "C:\\Program Files\\LOVE\\love.exe"
+				},
+				"l5.maxInstances": {
+					"type": "integer",
+					"description": "Set the max amount of instance you want to be able to spawn at the same time.",
+					"default": 1
+				},
+				"l5.useConsoleSubsystem": {
+					"type": "boolean",
+					"description": "Should Löve be executed with the console subsystem? (Windows only)",
+					"default": false
+				},
+				"l5.overwrite": {
+					"type": "boolean",
+					"description": "Should the launcher overwrite the first process when launching another one?",
+					"default": true
+				},
+				"l5.saveAllOnLaunch": {
+					"type": "boolean",
+					"description": "Should VS Code save all opened files on Löve launch?",
+					"default": false
+				},
+				"l5.autoRestartOnSave": {
+					"type": "boolean",
+					"description": "Automatically restart LÖVE when a Lua file is saved",
+					"default": false
+				},
+				"l5.customArgs": {
+					"type": "string",
+					"description": "Additional command line arguments to pass to LÖVE (space-separated)",
+					"default": ""
+				}
+			}
+		}
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"pretest": "npm run lint",
+		"test": "vscode-test"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.125.0",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "22.x",
+		"eslint": "^9.39.3",
+		"@vscode/test-cli": "^0.0.12",
+		"@vscode/test-electron": "^2.5.2"
+	}
 }
