@@ -3,6 +3,16 @@
 	"displayName": "L5",
 	"description": "Build and compile L5 projects using the Love2d game engine with a push of a button.",
 	"version": "0.0.1",
+	"publisher": "l5lua",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/L5lua/L5-vscode-extension.git"
+	},
+	"icon": "media/logo.png",
+	"galleryBanner": {
+		"color": "gold"
+	},
 	"engines": {
 		"vscode": "^1.100.3"
 	},
@@ -91,11 +101,12 @@
 		"test": "vscode-test"
 	},
 	"devDependencies": {
-		"@types/vscode": "^1.125.0",
-		"@types/mocha": "^10.0.10",
-		"@types/node": "22.x",
-		"eslint": "^9.39.3",
 		"@vscode/test-cli": "^0.0.12",
-		"@vscode/test-electron": "^2.5.2"
+		"@vscode/test-electron": "^2.5.2",
+		"eslint": "^9.39.3"
+	},
+	"homepage": "https://github.com/L5lua/L5-vscode-extension/blob/main/README.md",
+	"bugs": {
+		"url": "https://github.com/L5lua/L5-vscode-extension/issues"
 	}
 }
