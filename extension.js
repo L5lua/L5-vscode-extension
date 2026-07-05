@@ -322,7 +322,6 @@ async function activate(context) {
 				outputChannel?.show(true);
 
 				process.on('exit', (code, signal) => {
-					console.log(process.spawnargs);
 					if (process.pid && !process.spawnargs.includes('open')) {
 						currentInstances.delete(process.pid);
 						console.log(
@@ -332,9 +331,6 @@ async function activate(context) {
 					updateStatusBar();
 				});
 				process.on('close', (code, signal) => {
-					console.log(
-						`LOVE process closed with code ${code}, signal ${signal}`,
-					);
 					updateStatusBar();
 				});
 

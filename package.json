@@ -45,7 +45,7 @@
 		],
 		"configuration": {
 			"type": "object",
-			"title": "L5 configuration",
+			"title": "L5",
 			"properties": {
 				"l5.path": {
 					"type": "string",
