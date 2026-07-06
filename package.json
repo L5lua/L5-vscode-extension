@@ -3,7 +3,7 @@
 	"displayName": "L5",
 	"description": "Build and compile L5 projects using the Love2d game engine with a push of a button.",
 	"version": "0.0.1",
-	"publisher": "l5lua",
+	"publisher": "L5lua",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
