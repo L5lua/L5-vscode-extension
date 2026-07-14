@@ -1,8 +1,8 @@
-name: Release
+name: Release Extension
 on:
-  release:
-    types:
-      - published
+  push:
+    tags:
+      - "*"
   workflow_dispatch:
     inputs:
       publishMS:
@@ -33,7 +33,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org/
 
       - name: Install dependencies
@@ -41,7 +41,7 @@ jobs:
 
       - name: Setup package path
         id: setup
-        run: echo "::set-output name=packageName::$(node -e "console.log(require('./package.json').name + '-' + require('./package.json').version + '.vsix')")"
+        run: echo "packageName=$(node -e "console.log(require('./package.json').name + '-' + require('./package.json').version + '.vsix')")" >> $GITHUB_OUTPUT
 
       - name: Package
         run: |
@@ -57,9 +57,8 @@ jobs:
         id: setup-tag
         run: |
           $version = (Get-Content ./package.json -Raw | ConvertFrom-Json).version
-          Write-Host "tag: release/$version"
-          Write-Host "::set-output name=tag::release/$version"
-          Write-Host "::set-output name=version::$version"
+          Write-Host "tag=release/$version" >> $GITHUB_OUTPUT
+          Write-Host "version=$version" >> $GITHUB_OUTPUT
         shell: pwsh
 
   publishMS:
@@ -100,7 +99,7 @@ jobs:
 
       - name: Create Release
         id: create-release
-        uses: actions/create-release@v4
+        uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
