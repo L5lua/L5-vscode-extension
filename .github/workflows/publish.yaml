@@ -1,4 +1,5 @@
 name: Release Extension
+
 on:
   push:
     tags:
