@@ -60,7 +60,10 @@ function validateLovePath(lovePath, platform) {
 	}
 
 	if (platform === 'linux') {
-		if (isFlatpakInstalled()) {
+
+		let flatpakInstalled = findExecutableInPath("flatpak")
+
+		if (flatpakInstalled) {
 			return { valid: true, resolvedPath: FLATPAK_MARKER, isFlatpak: true };
 		}
 
