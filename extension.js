@@ -90,9 +90,9 @@ function isLoveProject() {
 
 	const rootPath = workspaceFolders[0].uri.fsPath;
 	const mainLuaPath = path.join(rootPath, 'main.lua');
-	//const confLuaPath = path.join(rootPath, 'conf.lua');
+	const libLuaPath = path.join(rootPath, 'L5.lua');
 
-	return fs.existsSync(mainLuaPath) //|| fs.existsSync(confLuaPath);
+	return fs.existsSync(mainLuaPath) || fs.existsSync(libLuaPath);
 }
 
 async function updateStatusBar() {
