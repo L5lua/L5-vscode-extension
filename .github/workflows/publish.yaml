@@ -54,12 +54,12 @@ jobs:
           if-no-files-found: error
 
       - name: Setup tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Update package.json version
-        working-directory: /
-        run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+        id: setup-tag
+        run: |
+          $version = (Get-Content ./package.json -Raw | ConvertFrom-Json).version
+          Write-Host "tag=release/$version" >> $GITHUB_OUTPUT
+          Write-Host "version=$version" >> $GITHUB_OUTPUT
+        shell: pwsh
 
   publishMS:
     name: Publish to VS marketplace
