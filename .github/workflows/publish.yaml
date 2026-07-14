@@ -2,7 +2,8 @@ name: Release Extension
 on:
   push:
     tags:
-      - "*"
+      - "v*"
+
   workflow_dispatch:
     inputs:
       publishMS:
@@ -35,6 +36,13 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org/
+      
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Update package.json version
+        run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
 
       - name: Install dependencies
         run: npm i
@@ -52,14 +60,6 @@ jobs:
           name: ${{ steps.setup.outputs.packageName }}
           path: ./${{ steps.setup.outputs.packageName }}
           if-no-files-found: error
-
-      - name: Setup tag
-        id: setup-tag
-        run: |
-          $version = (Get-Content ./package.json -Raw | ConvertFrom-Json).version
-          Write-Host "tag=release/$version" >> $GITHUB_OUTPUT
-          Write-Host "version=$version" >> $GITHUB_OUTPUT
-        shell: pwsh
 
   publishMS:
     name: Publish to VS marketplace
