@@ -1,10 +1,9 @@
 name: Release Extension
 
 on:
-  push:
-    tags:
-      - "v*"
-
+  release:
+    types:
+      - published
   workflow_dispatch:
     inputs:
       publishMS:
@@ -24,44 +23,6 @@ on:
         default: "true"
 
 jobs:
-  package:
-    name: Package
-    runs-on: ubuntu-latest
-    outputs:
-      packageName: ${{ steps.setup.outputs.packageName }}
-      tag: ${{ steps.setup-tag.outputs.tag }}
-      version: ${{ steps.setup-tag.outputs.version }}
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          registry-url: https://registry.npmjs.org/
-      
-      - name: Get version from tag
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-
-      - name: Update package.json version
-        run: npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
-
-      - name: Install dependencies
-        run: npm i
-
-      - name: Setup package path
-        id: setup
-        run: echo "packageName=$(node -e "console.log(require('./package.json').name + '-' + require('./package.json').version + '.vsix')")" >> $GITHUB_OUTPUT
-
-      - name: Package
-        run: |
-          npx vsce package --out ${{ steps.setup.outputs.packageName }}
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: ${{ steps.setup.outputs.packageName }}
-          path: ./${{ steps.setup.outputs.packageName }}
-          if-no-files-found: error
-
   publishMS:
     name: Publish to VS marketplace
     runs-on: ubuntu-latest
