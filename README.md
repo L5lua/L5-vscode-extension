@@ -22,6 +22,14 @@ This extension contributes the following settings:
 * `l5.autoRestartOnSave`: Automatically restart LÖVE when a Lua file is saved. Defaults to `false`.
 * `l5.customArgs`: Additional command line arguments to pass to LÖVE (space-separated). Defaults to `""`.
 
+## Contributing
+
+There are a couple of docs that might be helpful in contributing to this extension!
+
+- [Setting Up Developer Environment](./docs/setting-up-dev-environment.md) → Useful for getting the extension running on your own computer
+- [How to Publish Extensions](./docs/how-to-publish-extension.md) → manual creation of `.vsix` files
+- [Github Workflows](./docs/github-workflow.md) → how the Github Workflows work
+
 ## Known Issues
 
 ### MacOS Extra Security Approval

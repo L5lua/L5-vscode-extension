@@ -6,12 +6,16 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
+// stores all the instances of Love2d running
 let currentInstances = new Map();
+// actual "Run L5" button in menu
 let statusBarItem;
 let outputChannel;
 
+// property to check if this is the first time L5 installed
 const FIRST_RUN_KEY = 'l5.firstRunCompleted';
 
+// check which system and which default love path is specified
 function getDefaultLovePath() {
 	const platform = os.platform();
 	if (platform === 'win32') {
@@ -23,6 +27,7 @@ function getDefaultLovePath() {
 	}
 }
 
+// find Love2d in the specified path
 function findExecutableInPath(executable) {
 	const pathEnv = process.env.PATH || '';
 	const pathSeparator = os.platform() === 'win32' ? ';' : ':';
@@ -42,7 +47,10 @@ function findExecutableInPath(executable) {
 	return null;
 }
 
+// check whether or not Love2d is on the path for the specific platform
 function validateLovePath(lovePath, platform) {
+
+	// if the path is absolute, then it should be fine
 	if (path.isAbsolute(lovePath)) {
 		if (fs.existsSync(lovePath)) {
 			return { valid: true, resolvedPath: lovePath };
@@ -54,26 +62,19 @@ function validateLovePath(lovePath, platform) {
 		};
 	}
 
+	// otherwise, check for relative path / added love to path
 	const resolvedPath = findExecutableInPath(lovePath);
 	if (resolvedPath) {
 		return { valid: true, resolvedPath };
-	}
-
-	if (platform === 'linux') {
-
-		let flatpakInstalled = findExecutableInPath("flatpak")
-
-		if (flatpakInstalled) {
-			return { valid: true, resolvedPath: FLATPAK_MARKER, isFlatpak: true };
-		}
-
+	} else if (platform === 'linux') {
 		return {
 			valid: false,
 			resolvedPath: lovePath,
-			error: `LOVE executable "${lovePath}" not found in PATH. Install LOVE (e.g., 'sudo apt install love' or 'flatpak install flathub org.love2d.love2d') or set the full path in settings.`,
+			error: `LOVE executable "${lovePath}" not found in PATH. Install LOVE (e.g., 'sudo apt install love') or set the full path in settings.`,
 		};
 	}
 
+	// otherwise, can't find Love2d on the path
 	return {
 		valid: false,
 		resolvedPath: lovePath,
@@ -81,10 +82,12 @@ function validateLovePath(lovePath, platform) {
 	};
 }
 
+// is this the first time you ran the extension?
 function checkFirstRun(context) {
 	return !context.globalState.get(FIRST_RUN_KEY, false);
 }
 
+// is the current workspace a L5 project?
 function isLoveProject() {
 	const workspaceFolders = vscode.workspace.workspaceFolders;
 	if (!workspaceFolders || workspaceFolders.length === 0) {
@@ -98,12 +101,15 @@ function isLoveProject() {
 	return fs.existsSync(mainLuaPath) || fs.existsSync(libLuaPath);
 }
 
+// is an L5 project already running using Love2d?
 async function updateStatusBar() {
+	// is this project not L5 project? don't show "Run L5" button
 	if (!isLoveProject()) {
 		statusBarItem?.hide();
 		return;
 	}
 
+	// does button exist? if not, add it to the status bar
 	if (!statusBarItem) {
 		statusBarItem = vscode.window.createStatusBarItem(
 			vscode.StatusBarAlignment.Left,
@@ -111,24 +117,29 @@ async function updateStatusBar() {
 		);
 	}
 
+	// if love is running, change language to "Stop Love"
 	if (currentInstances.size > 0) {
 		statusBarItem.text = '$(debug-stop) Stop LOVE';
 		statusBarItem.tooltip = 'Stop running LOVE instance';
 		statusBarItem.command = 'l5.stop';
-	} else {
+	} else { // otherwise, language of button should be "Run L5"
 		statusBarItem.text = '$(play) Run L5';
 		statusBarItem.tooltip = 'Launch LOVE project (Alt+L)';
 		statusBarItem.command = 'l5.launch';
 	}
+
+	// update the display of the button
 	statusBarItem.show();
 }
 
+// display message when first running
 async function showWelcomeMessage(context) {
 	const platform = os.platform();
 
 	let message;
 	let needsConfiguration;
 
+	// these technically all do the same thing, but may need configuration later on based on OS tests
 	if (platform === 'darwin') {
 		message =
 			'Welcome to the L5 Extension! Please configure the path to your LOVE executable to get started.';
@@ -162,27 +173,37 @@ async function showWelcomeMessage(context) {
 	return needsConfiguration;
 }
 
+// this is what happens when the exetension is run
+// context: vscode.ExtensionContext
 async function activate(context) {
+	// retrieve configurations from the extension settings
+	// to customize, open User Settings → Extensions → L5
 	let maxInstances = vscode.workspace
 		.getConfiguration('l5')
 		.get('maxInstances');
 	let overwrite = vscode.workspace.getConfiguration('l5').get('overwrite');
 
+	// outputChannels are read-only textual information
 	outputChannel = vscode.window.createOutputChannel('LOVE');
+	// subscriptions are the disposables
 	context.subscriptions.push(outputChannel);
+	// basically the extension opens things and adds them to subscriptions
+	// when extension stops / disabled / uninstalled, it deletes any running subscriptions
 
 	updateStatusBar();
 
+	// handles watching files for changes to restart Love2d instance
 	const fileWatcher =
 		vscode.workspace.createFileSystemWatcher('**/{main,conf}.lua');
-	await fileWatcher.onDidCreate(async () => await updateStatusBar());
-	await fileWatcher.onDidDelete(async () => await updateStatusBar());
+	fileWatcher.onDidCreate(updateStatusBar());
+	fileWatcher.onDidDelete(updateStatusBar());
 	context.subscriptions.push(fileWatcher);
+	// add the filewatcher to what the extension is monitoring
 
-	await vscode.workspace.onDidChangeWorkspaceFolders(
-		async () => await updateStatusBar(),
-	);
+	// if a new folder is opened or a new workspace created, check if L5.lua and main.lua still exist
+	vscode.workspace.onDidChangeWorkspaceFolders(updateStatusBar());
 
+	// check if stop event triggered (closing Love2d or pressing stop button)
 	const stopCommand = vscode.commands.registerCommand('l5.stop', () => {
 		currentInstances.forEach((instance) => {
 			if (!instance.killed) {
@@ -191,23 +212,19 @@ async function activate(context) {
 		});
 		currentInstances.clear();
 
-		// check if flatpak is actually defined
-		if (os.platform() === 'linux') {
-			cp.spawn('flatpak', ['kill', FLATPAK_APP_ID], {
-				detached: true,
-				stdio: 'ignore',
-			});
-		}
-
 		updateStatusBar();
 	});
 	context.subscriptions.push(stopCommand);
+	// add stop event handling to extension monitoring
 
+	// check if file was saved
 	const saveListener = vscode.workspace.onDidSaveTextDocument((document) => {
+		// retrieve preference on auto-restart on saving
 		const autoRestart = vscode.workspace
 			.getConfiguration('l5')
 			.get('autoRestartOnSave');
 
+		// if auto-restart enabled, on save run l5.launch command
 		if (
 			autoRestart &&
 			document.languageId === 'lua' &&
@@ -217,7 +234,9 @@ async function activate(context) {
 		}
 	});
 	context.subscriptions.push(saveListener);
+	// add save-watcher event handling to extension monitoring
 
+	// the action that happens when Love2d is launched from the status bar button
 	let disposable = vscode.commands.registerCommand('l5.launch', async () => {
 		// Check for first run and show welcome message
 		if (checkFirstRun(context)) {
@@ -246,6 +265,7 @@ async function activate(context) {
 					lovePath = getDefaultLovePath();
 				}
 
+				// check if Love2d is able to be found on the correct comptuer path
 				const validation = validateLovePath(lovePath, platform);
 				if (!validation.valid) {
 					const result = await vscode.window.showErrorMessage(
@@ -261,8 +281,9 @@ async function activate(context) {
 					return;
 				}
 
+				// real real path now
 				const resolvedLovePath = validation.resolvedPath;
-				const useFlatpak = validation.isFlatpak === true;
+				// retrieve user preferences from extension settings
 				const useConsoleSubsystem = vscode.workspace
 					.getConfiguration('l5')
 					.get('useConsoleSubsystem');
@@ -296,6 +317,8 @@ async function activate(context) {
 					loveProjectPath = Folders[0].uri.fsPath;
 				}
 
+				// this will be the node.child_process
+				// retrieves the Love2d binary / executable 
 				let process;
 
 				if (platform === 'win32') {
@@ -310,20 +333,25 @@ async function activate(context) {
 					]);
 				}
 
+				// if process.pid exists, add it to the list of current instances
 				if (process.pid) {
 					await currentInstances.set(process.pid, process);
 					console.log(currentInstances);
 					await updateStatusBar();
 				}
+				// prints data from Love2d to the console
 				process.stdout.on('data', (data) => {
 					console.log(`LOVE stdout: ${data}`);
 				});
-
+				// prints errors from Love2d to the console
 				process.stderr.on('data', (data) => {
 					console.error(`LOVE stderr: ${data}`);
 				});
 				outputChannel?.show(true);
+				// yes we want to show these to the user console
 
+				// if close event detected, remove it from tracked instances 
+				// and close Love2d instance running
 				process.on('exit', (code, signal) => {
 					if (process.pid && !process.spawnargs.includes('open')) {
 						currentInstances.delete(process.pid);
@@ -337,6 +365,7 @@ async function activate(context) {
 					updateStatusBar();
 				});
 
+				// if something wrong, inform the user
 				process.on('error', async (err) => {
 					const result = await vscode.window.showErrorMessage(
 						`Failed to launch LOVE: ${err.message}`,
@@ -367,6 +396,7 @@ async function activate(context) {
 	});
 
 	context.subscriptions.push(disposable);
+	// have extension keep track of running L5 window
 
 	if (statusBarItem) {
 		context.subscriptions.push(statusBarItem);
